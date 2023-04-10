@@ -6,8 +6,15 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.dark;
 
   // This widget is the root of your application.
   @override
@@ -15,43 +22,102 @@ class MyApp extends StatelessWidget {
     Color surfaceColor = Color(0x0dffffff);
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        primaryColor: Colors.pink.shade300,
-        brightness: Brightness.dark,
-        dividerColor: surfaceColor,
-        dividerTheme: DividerThemeData(
-            color: Colors.white, indent: 32, endIndent: 32, thickness: 0.5),
-        scaffoldBackgroundColor: Color.fromARGB(255, 30, 30, 30),
-        appBarTheme: AppBarTheme(backgroundColor: Colors.black),
-        inputDecorationTheme: InputDecorationTheme(
-          border: InputBorder.none,
-          filled: true,
-          fillColor: surfaceColor,
-        ),
-        textTheme: GoogleFonts.latoTextTheme(
-          TextTheme(
-              bodyText2: TextStyle(
-                fontSize: 15,
-              ),
-              bodyText1: TextStyle(
-                  fontSize: 13, color: Color.fromARGB(200, 255, 255, 255)),
-              headline6: TextStyle(fontWeight: FontWeight.w900),
-              subtitle1: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ),
+      theme: _themeMode == ThemeMode.dark
+          ? MyAppThemeConfig.dark().getTheme()
+          : MyAppThemeConfig.light().getTheme(),
+      home: MyHomePage(
+        toggleThemeMode: () {
+          setState(() {
+            if (_themeMode == ThemeMode.dark)
+              _themeMode = ThemeMode.light;
+            else
+              _themeMode = ThemeMode.dark;
+          });
+        },
       ),
-      home: MyHomePage(),
     );
   }
+}
+
+class MyAppThemeConfig {
+  final Color primaryColor = Colors.pink.shade400;
+  final Color primaryTextColor;
+  final Color secondraryTextColor;
+  final Color surfaceColor;
+  final Color backgroundColor;
+  final Color appBarColor;
+  final Brightness brightness;
+
+  MyAppThemeConfig.dark()
+      : primaryTextColor = Colors.white,
+        secondraryTextColor = Colors.white70,
+        surfaceColor = Color(0x0dffffff),
+        backgroundColor = Color.fromARGB(255, 30, 30, 30),
+        appBarColor = Colors.black,
+        brightness = Brightness.dark;
+
+  MyAppThemeConfig.light()
+      : primaryTextColor = Colors.grey.shade900,
+        secondraryTextColor = Colors.grey.shade900.withOpacity(0.8),
+        surfaceColor = Color(0x0d000000),
+        backgroundColor = Colors.white,
+        appBarColor = Color.fromARGB(255, 235, 235, 235),
+        brightness = Brightness.light;
+
+  ThemeData getTheme() {
+    return ThemeData(
+      // This is the theme of your application.
+      //
+      // Try running your application with "flutter run". You'll see the
+      // application has a blue toolbar. Then, without quitting the app, try
+      // changing the primarySwatch below to Colors.green and then invoke
+      // "hot reload" (press "r" in the console where you ran "flutter run",
+      // or simply save your changes to "hot reload" in a Flutter IDE).
+      // Notice that the counter didn't reset back to zero; the application
+      // is not restarted.
+      primarySwatch: Colors.blue,
+      primaryColor: primaryColor,
+      brightness: brightness,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(primaryColor))),
+      dividerColor: surfaceColor,
+      dividerTheme: DividerThemeData(
+          color: Colors.white, indent: 32, endIndent: 32, thickness: 0.5),
+      scaffoldBackgroundColor: backgroundColor,
+      appBarTheme: AppBarTheme(
+          backgroundColor: appBarColor, foregroundColor: primaryTextColor),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none),
+        filled: true,
+        fillColor: surfaceColor,
+      ),
+      textTheme: GoogleFonts.latoTextTheme(
+        TextTheme(
+            bodyText2: TextStyle(
+              fontSize: 15,
+              color: primaryTextColor,
+            ),
+            bodyText1: TextStyle(fontSize: 13, color: secondraryTextColor),
+            headline6:
+                TextStyle(fontWeight: FontWeight.w900, color: primaryTextColor),
+            subtitle1: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: primaryTextColor)),
+      ),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  final Function() toggleThemeMode;
+
+  const MyHomePage({super.key, required this.toggleThemeMode});
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 enum _SkillType {
@@ -60,11 +126,6 @@ enum _SkillType {
   illistrator,
   afterEffect,
   lightRoom,
-}
-
-class MyHomePage extends StatefulWidget {
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -82,9 +143,12 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text('Curriculum Vitae'),
         actions: [
           Icon(CupertinoIcons.chat_bubble),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-            child: Icon(CupertinoIcons.ellipsis_vertical),
+          InkWell(
+            onTap: widget.toggleThemeMode,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+              child: Icon(CupertinoIcons.ellipsis_vertical),
+            ),
           )
         ],
       ),
@@ -259,11 +323,25 @@ class _MyHomePageState extends State<MyHomePage> {
                         labelText: 'Email',
                         prefixIcon: Icon(CupertinoIcons.at)),
                   ),
+                  SizedBox(
+                    height: 8,
+                  ),
                   TextField(
                     decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: Icon(CupertinoIcons.lock)),
                   ),
+                  SizedBox(
+                    height: 4,
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      child: Text('save'),
+                    ),
+                  )
                 ],
               ),
             ),
