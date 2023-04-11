@@ -1,6 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,6 +19,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.dark;
+  Locale _locale = Locale('en');
 
   // This widget is the root of your application.
   @override
@@ -22,9 +27,17 @@ class _MyAppState extends State<MyApp> {
     Color surfaceColor = Color(0x0dffffff);
     return MaterialApp(
       title: 'Flutter Demo',
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: _locale,
       theme: _themeMode == ThemeMode.dark
-          ? MyAppThemeConfig.dark().getTheme()
-          : MyAppThemeConfig.light().getTheme(),
+          ? MyAppThemeConfig.dark().getTheme(_locale.languageCode)
+          : MyAppThemeConfig.light().getTheme(_locale.languageCode),
       home: MyHomePage(
         toggleThemeMode: () {
           setState(() {
@@ -34,12 +47,20 @@ class _MyAppState extends State<MyApp> {
               _themeMode = ThemeMode.dark;
           });
         },
+        selectedLanguageChanged: (_Language newSelectedLanguageByUser) {
+          setState(() {
+            _locale = newSelectedLanguageByUser == _Language.en
+                ? Locale('en')
+                : Locale('fa');
+          });
+        },
       ),
     );
   }
 }
 
 class MyAppThemeConfig {
+  static const String faPrimaryFontFamily = 'B-Titr-Bold';
   final Color primaryColor = Colors.pink.shade400;
   final Color primaryTextColor;
   final Color secondraryTextColor;
@@ -64,7 +85,7 @@ class MyAppThemeConfig {
         appBarColor = Color.fromARGB(255, 235, 235, 235),
         brightness = Brightness.light;
 
-  ThemeData getTheme() {
+  ThemeData getTheme(String languageCode) {
     return ThemeData(
       // This is the theme of your application.
       //
@@ -75,7 +96,7 @@ class MyAppThemeConfig {
       // or simply save your changes to "hot reload" in a Flutter IDE).
       // Notice that the counter didn't reset back to zero; the application
       // is not restarted.
-      primarySwatch: Colors.blue,
+      primarySwatch: Colors.pink,
       primaryColor: primaryColor,
       brightness: brightness,
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -86,7 +107,9 @@ class MyAppThemeConfig {
           color: Colors.white, indent: 32, endIndent: 32, thickness: 0.5),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
-          backgroundColor: appBarColor, foregroundColor: primaryTextColor),
+          elevation: 0,
+          backgroundColor: appBarColor,
+          foregroundColor: primaryTextColor),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -94,7 +117,11 @@ class MyAppThemeConfig {
         filled: true,
         fillColor: surfaceColor,
       ),
-      textTheme: GoogleFonts.latoTextTheme(
+      textTheme: languageCode == 'en' ? enPrimaryTextTheme : faPrimaryTextTheme,
+    );
+  }
+
+  TextTheme get enPrimaryTextTheme => GoogleFonts.latoTextTheme(
         TextTheme(
             bodyText2: TextStyle(
               fontSize: 15,
@@ -107,40 +134,65 @@ class MyAppThemeConfig {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: primaryTextColor)),
+      );
+
+  TextTheme get faPrimaryTextTheme => TextTheme(
+      bodyText2: TextStyle(
+        fontSize: 15,
+        color: primaryTextColor,
       ),
-    );
-  }
+      bodyText1: TextStyle(
+          fontSize: 13,
+          height: 1.5,
+          color: secondraryTextColor,
+          fontFamily: faPrimaryFontFamily),
+      headline6: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          color: primaryTextColor,
+          fontFamily: faPrimaryFontFamily),
+      subtitle1: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: primaryTextColor,
+          fontFamily: faPrimaryFontFamily),
+      button: TextStyle(fontFamily: faPrimaryFontFamily));
 }
 
 class MyHomePage extends StatefulWidget {
   final Function() toggleThemeMode;
+  final Function(_Language _language) selectedLanguageChanged;
 
-  const MyHomePage({super.key, required this.toggleThemeMode});
+  const MyHomePage(
+      {super.key,
+      required this.toggleThemeMode,
+      required this.selectedLanguageChanged});
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-enum _SkillType {
-  photoshop,
-  xd,
-  illistrator,
-  afterEffect,
-  lightRoom,
-}
-
 class _MyHomePageState extends State<MyHomePage> {
   _SkillType _skill = _SkillType.photoshop;
-  void updateSelectedSkill(_SkillType skillType) {
+  _Language _language = _Language.en;
+  void _updateSelectedSkill(_SkillType skillType) {
     setState(() {
       this._skill = skillType;
     });
   }
 
+  void _updateSelectedLanguage(_Language language) {
+    widget.selectedLanguageChanged(language);
+    setState(() {
+      _language = language;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Curriculum Vitae'),
+        title: Text(localization.profileTitle),
         actions: [
           Icon(CupertinoIcons.chat_bubble),
           InkWell(
@@ -176,13 +228,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mehdi Khodadoust',
+                          localization.name,
                           style: Theme.of(context).textTheme.subtitle1,
                         ),
                         SizedBox(
                           height: 2,
                         ),
-                        Text('Developer Flutter & Designer'),
+                        Text(localization.job),
                         SizedBox(
                           height: 4,
                         ),
@@ -198,7 +250,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               width: 3,
                             ),
                             Text(
-                              'Kermanshah, Iran',
+                              localization.location,
                               style: Theme.of(context).textTheme.caption,
                             )
                           ],
@@ -216,8 +268,34 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(32, 0, 32, 16),
               child: Text(
-                'Enthusiastic young Flutter developer Freelance, Designer in love of independence, I have a few experince in Flutter but I want to be good developer in it, and always give the best of myself to bring you to success.',
+                localization.summary,
                 style: Theme.of(context).textTheme.bodyText1,
+              ),
+            ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(32, 12, 32, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(localization.selectedLanguage),
+                  CupertinoSlidingSegmentedControl<_Language>(
+                      groupValue: _language,
+                      thumbColor: Theme.of(context).colorScheme.primary,
+                      children: {
+                        _Language.en: Text(
+                          localization.enLanguage,
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        _Language.fa: Text(
+                          localization.faLanguage,
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      },
+                      onValueChanged: (value) {
+                        if (value != null) _updateSelectedLanguage(value);
+                      })
+                ],
               ),
             ),
             Divider(),
@@ -227,7 +305,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'skills',
+                    localization.skills,
                     style: Theme.of(context)
                         .textTheme
                         .bodyText2!
@@ -256,7 +334,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     shadowColor: Colors.blue,
                     isActive: _skill == _SkillType.photoshop,
                     onTop: () {
-                      updateSelectedSkill(_SkillType.photoshop);
+                      _updateSelectedSkill(_SkillType.photoshop);
                     },
                   ),
                   Skill(
@@ -266,7 +344,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     shadowColor: Colors.pink,
                     isActive: _skill == _SkillType.xd,
                     onTop: () {
-                      updateSelectedSkill(_SkillType.xd);
+                      _updateSelectedSkill(_SkillType.xd);
                     },
                   ),
                   Skill(
@@ -276,7 +354,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     shadowColor: Colors.orange,
                     isActive: _skill == _SkillType.illistrator,
                     onTop: () {
-                      updateSelectedSkill(_SkillType.illistrator);
+                      _updateSelectedSkill(_SkillType.illistrator);
                     },
                   ),
                   Skill(
@@ -286,7 +364,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     shadowColor: Colors.blue.shade800,
                     isActive: _skill == _SkillType.afterEffect,
                     onTop: () {
-                      updateSelectedSkill(_SkillType.afterEffect);
+                      _updateSelectedSkill(_SkillType.afterEffect);
                     },
                   ),
                   Skill(
@@ -296,7 +374,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     shadowColor: Colors.blue,
                     isActive: _skill == _SkillType.lightRoom,
                     onTop: () {
-                      updateSelectedSkill(_SkillType.lightRoom);
+                      _updateSelectedSkill(_SkillType.lightRoom);
                     },
                   ),
                 ],
@@ -309,7 +387,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Personal Information',
+                    localization.personalInformation,
                     style: Theme.of(context)
                         .textTheme
                         .bodyText2!
@@ -320,7 +398,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   TextField(
                     decoration: InputDecoration(
-                        labelText: 'Email',
+                        labelText: localization.email,
                         prefixIcon: Icon(CupertinoIcons.at)),
                   ),
                   SizedBox(
@@ -328,7 +406,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   TextField(
                     decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: localization.password,
                         prefixIcon: Icon(CupertinoIcons.lock)),
                   ),
                   SizedBox(
@@ -339,7 +417,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: () {},
-                      child: Text('save'),
+                      child: Text(localization.save),
                     ),
                   )
                 ],
@@ -414,4 +492,17 @@ class Skill extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _SkillType {
+  photoshop,
+  xd,
+  illistrator,
+  afterEffect,
+  lightRoom,
+}
+
+enum _Language {
+  en,
+  fa,
 }
